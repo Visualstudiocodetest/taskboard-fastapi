@@ -27,7 +27,7 @@ mysql -uroot -p -e "CREATE DATABASE taskboard; CREATE DATABASE taskboard_test;"
 .venv/bin/uvicorn app.main:app --reload
 ```
 Open http://127.0.0.1:8000 (UI) or http://127.0.0.1:8000/docs (API docs).
-Default connection: `root:admin1234@localhost/taskboard`; override with the `DATABASE_URL` env var.
+Copy `.env.example` to `.env` and fill in your MySQL credentials (`DATABASE_URL`, `TEST_DATABASE_URL`). `.env` is git-ignored.
 Tables are created automatically at startup.
 
 ## Endpoints

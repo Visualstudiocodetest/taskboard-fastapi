@@ -1,12 +1,12 @@
 import os
 
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
-# Credentials come from the environment; the default is for local development only.
-DATABASE_URL = os.getenv(
-    "DATABASE_URL", "mysql+pymysql://root:admin1234@localhost:3306/taskboard"
-)
+load_dotenv()  # reads .env (not committed); see .env.example
+
+DATABASE_URL = os.environ["DATABASE_URL"]
 
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 SessionLocal = sessionmaker(bind=engine, autoflush=False)

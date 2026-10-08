@@ -5,3 +5,4 @@ pymysql
 cryptography
 pytest
 httpx
+python-dotenv

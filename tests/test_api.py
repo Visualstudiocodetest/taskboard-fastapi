@@ -1,6 +1,9 @@
 import os
 
-os.environ["DATABASE_URL"] = "mysql+pymysql://root:admin1234@localhost:3306/taskboard_test"
+from dotenv import load_dotenv
+
+load_dotenv()
+os.environ["DATABASE_URL"] = os.environ["TEST_DATABASE_URL"]
 
 import pytest
 from fastapi.testclient import TestClient

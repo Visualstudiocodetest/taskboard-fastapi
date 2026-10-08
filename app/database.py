@@ -3,6 +3,7 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
+# Credentials come from the environment; the default is for local development only.
 DATABASE_URL = os.getenv(
     "DATABASE_URL", "mysql+pymysql://root:admin1234@localhost:3306/taskboard"
 )
@@ -16,8 +17,5 @@ class Base(DeclarativeBase):
 
 
 def get_db():
-    db = SessionLocal()
-    try:
+    with SessionLocal() as db:
         yield db
-    finally:
-        db.close()

@@ -34,9 +34,9 @@ class ProjectRepository:
         self.db.add(project)
         try:
             self.db.commit()
-        except IntegrityError:
+        except IntegrityError as err:
             self.db.rollback()
-            raise ConflictError("A project with this name already exists")
+            raise ConflictError("A project with this name already exists") from err
         return project
 
     def delete(self, project: models.Project) -> None:

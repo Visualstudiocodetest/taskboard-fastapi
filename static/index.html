@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TaskBoard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+  .cols { display: flex; gap: 2rem; flex-wrap: wrap; }
+  .cols > div { flex: 1; min-width: 260px; }
+  li { margin: .3rem 0; } li.sel > a { font-weight: bold; }
+  .done span { text-decoration: line-through; color: #888; }
+  #err { color: #b00; min-height: 1.2em; }
+  input, select, button { padding: .3rem; }
+</style>
+</head>
+<body>
+<h1>TaskBoard</h1>
+<div id="err"></div>
+<div class="cols">
+  <div>
+    <h2>Projects</h2>
+    <form id="pf"><input id="pname" placeholder="New project" required> <button>Add</button></form>
+    <ul id="projects"></ul>
+  </div>
+  <div>
+    <h2 id="ptitle">Tasks</h2>
+    <form id="tf" hidden>
+      <input id="ttitle" placeholder="New task" required>
+      <select id="tprio"><option value="1">High</option><option value="2" selected>Normal</option><option value="3">Low</option></select>
+      <button>Add</button>
+    </form>
+    <ul id="tasks"></ul>
+  </div>
+</div>
+<script>
+let current = null;
+const $ = id => document.getElementById(id);
+
+async function api(url, method = "GET", body) {
+  const r = await fetch(url, { method, headers: { "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : undefined });
+  if (!r.ok) {
+    const e = await r.json().catch(() => ({}));
+    const d = e.detail;
+    $("err").textContent = Array.isArray(d) ? d.map(x => x.loc.slice(1).join(".") + ": " + x.msg).join("; ") : (d || r.statusText);
+    throw new Error("api");
+  }
+  $("err").textContent = "";
+  return r.status === 204 ? null : r.json();
+}
+const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
+
+async function loadProjects() {
+  const ul = $("projects"); ul.innerHTML = "";
+  for (const p of await api("/api/projects")) {
+    const li = el("li", { className: p.id === current?.id ? "sel" : "" });
+    const a = el("a", { href: "#", textContent: `${p.name} (${p.task_count})` });
+    a.onclick = e => { e.preventDefault(); current = p; refresh(); };
+    const del = el("button", { textContent: "✕", title: "Delete project" });
+    del.onclick = async () => { if (confirm(`Delete "${p.name}" and its tasks?`)) {
+      await api(`/api/projects/${p.id}`, "DELETE"); if (current?.id === p.id) current = null; refresh(); } };
+    li.append(a, " ", del); ul.append(li);
+  }
+}
+async function loadTasks() {
+  const ul = $("tasks"); ul.innerHTML = "";
+  $("tf").hidden = !current;
+  $("ptitle").textContent = current ? `Tasks – ${current.name}` : "Tasks";
+  if (!current) return;
+  for (const t of await api(`/api/projects/${current.id}/tasks`)) {
+    const li = el("li", { className: t.done ? "done" : "" });
+    const cb = el("input", { type: "checkbox", checked: t.done });
+    cb.onchange = async () => { await api(`/api/tasks/${t.id}`, "PATCH", { done: cb.checked }); refresh(); };
+    const del = el("button", { textContent: "✕" });
+    del.onclick = async () => { await api(`/api/tasks/${t.id}`, "DELETE"); refresh(); };
+    li.append(cb, " ", el("span", { textContent: `${["", "🔴", "🟡", "🟢"][t.priority]} ${t.title}` }), " ", del);
+    ul.append(li);
+  }
+}
+const refresh = () => Promise.all([loadProjects(), loadTasks()]).catch(() => {});
+$("pf").onsubmit = async e => { e.preventDefault();
+  try { current = await api("/api/projects", "POST", { name: $("pname").value }); $("pname").value = ""; refresh(); } catch {} };
+$("tf").onsubmit = async e => { e.preventDefault();
+  try { await api(`/api/projects/${current.id}/tasks`, "POST", { title: $("ttitle").value, priority: +$("tprio").value });
+    $("ttitle").value = ""; refresh(); } catch {} };
+refresh();
+</script>
+</body>
+</html>

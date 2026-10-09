@@ -4,5 +4,5 @@ sqlalchemy
 pymysql
 cryptography
 pytest
-httpx
+httpx2
 python-dotenv

@@ -1,17 +1,33 @@
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+"""Request/response models. Shared constrained types keep the rules in one place."""
+from dataclasses import dataclass
+from typing import Annotated
+
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+
+
+def _text(max_length: int):
+    # Trimmed, non-blank string: "   " is rejected after stripping.
+    return Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1, max_length=max_length)
+    ]
+
+
+Name = _text(100)
+Title = _text(200)
+Priority = Annotated[int, Field(ge=1, le=3)]  # 1 = high, 2 = normal, 3 = low
+
+
+@dataclass
+class Page:
+    """Pagination window shared by all list endpoints."""
+
+    limit: int = 100
+    offset: int = 0
 
 
 class ProjectIn(BaseModel):
-    name: str = Field(min_length=1, max_length=100)
+    name: Name
     description: str | None = Field(default=None, max_length=2000)
-
-    @field_validator("name")
-    @classmethod
-    def strip_name(cls, v: str) -> str:
-        v = v.strip()
-        if not v:
-            raise ValueError("name must not be blank")
-        return v
 
 
 class ProjectOut(ProjectIn):
@@ -21,23 +37,17 @@ class ProjectOut(ProjectIn):
 
 
 class TaskIn(BaseModel):
-    title: str = Field(min_length=1, max_length=200)
+    title: Title
     done: bool = False
-    priority: int = Field(default=2, ge=1, le=3)
-
-    @field_validator("title")
-    @classmethod
-    def strip_title(cls, v: str) -> str:
-        v = v.strip()
-        if not v:
-            raise ValueError("title must not be blank")
-        return v
+    priority: Priority = 2
 
 
 class TaskUpdate(BaseModel):
-    title: str | None = Field(default=None, min_length=1, max_length=200)
+    """PATCH body: every field optional, only the ones sent are applied."""
+
+    title: Title | None = None
     done: bool | None = None
-    priority: int | None = Field(default=None, ge=1, le=3)
+    priority: Priority | None = None
 
 
 class TaskOut(TaskIn):

@@ -1,22 +1,15 @@
-from typing import Annotated
-
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter
 
 from .. import schemas
-from ..dependencies import get_project_service
-from ..services import ProjectService
+from ..dependencies import PageDep
+from ..dependencies import ProjectServiceDep as Service
 
 router = APIRouter(prefix="/api/projects", tags=["projects"])
-Service = Annotated[ProjectService, Depends(get_project_service)]
 
 
 @router.get("", response_model=list[schemas.ProjectOut])
-def list_projects(
-    service: Service,
-    limit: int = Query(100, ge=1, le=500),
-    offset: int = Query(0, ge=0),
-):
-    return service.list(limit, offset)
+def list_projects(service: Service, page: PageDep):
+    return service.list(page)
 
 
 @router.post("", response_model=schemas.ProjectOut, status_code=201)

@@ -1,24 +1,17 @@
-from typing import Annotated
-
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter
 
 from .. import schemas
-from ..dependencies import get_task_service
-from ..services import TaskService
+from ..dependencies import PageDep
+from ..dependencies import TaskServiceDep as Service
 
 router = APIRouter(prefix="/api", tags=["tasks"])
-Service = Annotated[TaskService, Depends(get_task_service)]
+
+# Tasks are created/listed under their project, but updated/deleted by their own id.
 
 
 @router.get("/projects/{project_id}/tasks", response_model=list[schemas.TaskOut])
-def list_tasks(
-    project_id: int,
-    service: Service,
-    done: bool | None = None,
-    limit: int = Query(100, ge=1, le=500),
-    offset: int = Query(0, ge=0),
-):
-    return service.list(project_id, done, limit, offset)
+def list_tasks(project_id: int, service: Service, page: PageDep, done: bool | None = None):
+    return service.list(project_id, done, page)
 
 
 @router.post("/projects/{project_id}/tasks", response_model=schemas.TaskOut, status_code=201)

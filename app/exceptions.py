@@ -3,12 +3,12 @@ class DomainError(Exception):
 
 
 class NotFoundError(DomainError):
-    pass
+    """Entity does not exist (HTTP 404)."""
 
 
 class ConflictError(DomainError):
-    pass
+    """Violates a uniqueness rule (HTTP 409)."""
 
 
 class ValidationError(DomainError):
-    pass
+    """Business-rule violation the schema cannot catch (HTTP 422)."""

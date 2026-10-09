@@ -5,6 +5,8 @@ from .database import Base
 
 
 class Project(Base):
+    """A container of tasks; name is unique."""
+
     __tablename__ = "projects"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -17,6 +19,8 @@ class Project(Base):
 
 
 class Task(Base):
+    """Belongs to one project; deleted with it (ON DELETE CASCADE + ORM cascade)."""
+
     __tablename__ = "tasks"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
